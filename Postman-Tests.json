@@ -1,0 +1,810 @@
+{
+  "info": {
+    "_postman_id": "132b0450-3915-4cd5-b5a9-3ba0032da639",
+    "name": "ArchTp2 - Microservices Tests",
+    "description": "Collection de tests pour l'architecture microservices TP2.\nCouvre 5 scénarios :\n1. CRUD Étudiants\n2. CRUD Cours\n3. Cours enrichis\n4. Suppression étudiant et impact\n5. Simulation panne ServiceEtudiants",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "48474747",
+    "_collection_link": "https://go.postman.co/collection/48474747-132b0450-3915-4cd5-b5a9-3ba0032da639?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Scénario 1 - Étudiants (POST + GET)",
+      "item": [
+        {
+          "name": "1.1 Créer un étudiant (POST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Vérification code HTTP 201",
+                  "pm.test('Status 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "// Vérification structure JSON",
+                  "pm.test('Réponse JSON valide', function () {",
+                  "    pm.response.to.be.json;",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json).to.have.property('nom');",
+                  "    pm.expect(json).to.have.property('prenom');",
+                  "    pm.expect(json).to.have.property('email');",
+                  "});",
+                  "",
+                  "// Sauvegarder l'ID pour les requêtes suivantes",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('etudiant_id', json.id);",
+                  "console.log('Étudiant créé avec ID:', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Laayadi\",\n  \"prenom\": \"Youssef\",\n  \"email\": \"youssef.laayadi@etudiant.ma\"\n}"
+            },
+            "url": {
+              "raw": "{{base_etudiants}}/etudiants",
+              "host": [
+                "{{base_etudiants}}"
+              ],
+              "path": [
+                "etudiants"
+              ]
+            },
+            "description": "Crée un nouvel étudiant. Attend HTTP 201 et un objet JSON avec id, nom, prenom, email."
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Lire l'étudiant créé (GET by ID)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Vérification code HTTP 200",
+                  "pm.test('Status 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Vérification structure JSON",
+                  "pm.test('Réponse JSON valide avec champs attendus', function () {",
+                  "    pm.response.to.be.json;",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json).to.have.property('nom');",
+                  "    pm.expect(json).to.have.property('prenom');",
+                  "    pm.expect(json).to.have.property('email');",
+                  "});",
+                  "",
+                  "// Vérification cohérence des données",
+                  "pm.test('Données cohérentes avec la création', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.nom).to.eql('Laayadi');",
+                  "    pm.expect(json.prenom).to.eql('Youssef');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_etudiants}}/etudiants/{{etudiant_id}}",
+              "host": [
+                "{{base_etudiants}}"
+              ],
+              "path": [
+                "etudiants",
+                "{{etudiant_id}}"
+              ]
+            },
+            "description": "Récupère l'étudiant créé à l'étape 1.1 via son ID. Attend HTTP 200."
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Lister tous les étudiants (GET all)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Réponse est un tableau JSON', function () {",
+                  "    pm.response.to.be.json;",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('array');",
+                  "    pm.expect(json.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_etudiants}}/etudiants",
+              "host": [
+                "{{base_etudiants}}"
+              ],
+              "path": [
+                "etudiants"
+              ]
+            },
+            "description": "Récupère la liste complète des étudiants. Attend HTTP 200 et un tableau non vide."
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 GET étudiant inexistant (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404 Not Found', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Message d\\'erreur lisible', function () {",
+                  "    pm.response.to.be.json;",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('message').that.is.a('string');",
+                  "    pm.expect(json.message.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_etudiants}}/etudiants/99999",
+              "host": [
+                "{{base_etudiants}}"
+              ],
+              "path": [
+                "etudiants",
+                "99999"
+              ]
+            },
+            "description": "Tente de récupérer un étudiant avec un ID inexistant. Attend HTTP 404 avec message d'erreur."
+          },
+          "response": []
+        }
+      ],
+      "description": "Création et lecture d'un étudiant via ServiceEtudiants."
+    },
+    {
+      "name": "Scénario 2 - Cours (POST + GET)",
+      "item": [
+        {
+          "name": "2.1 Créer un cours (POST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Réponse JSON valide', function () {",
+                  "    pm.response.to.be.json;",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json).to.have.property('titre');",
+                  "    pm.expect(json).to.have.property('description');",
+                  "    pm.expect(json).to.have.property('etudiantId');",
+                  "});",
+                  "",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('cours_id', json.id);",
+                  "console.log('Cours créé avec ID:', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"Architecture des Microservices\",\n  \"description\": \"Introduction aux microservices avec Spring Boot\",\n  \"etudiantId\": {{etudiant_id}}\n}"
+            },
+            "url": {
+              "raw": "{{base_cours}}/cours",
+              "host": [
+                "{{base_cours}}"
+              ],
+              "path": [
+                "cours"
+              ]
+            },
+            "description": "Crée un nouveau cours associé à l'étudiant créé au scénario 1. Attend HTTP 201."
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Lire le cours créé (GET by ID)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Réponse JSON valide avec champs attendus', function () {",
+                  "    pm.response.to.be.json;",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json).to.have.property('titre');",
+                  "    pm.expect(json).to.have.property('description');",
+                  "    pm.expect(json).to.have.property('etudiantId');",
+                  "});",
+                  "",
+                  "pm.test('Données cohérentes avec la création', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.titre).to.eql('Architecture des Microservices');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_cours}}/cours/{{cours_id}}",
+              "host": [
+                "{{base_cours}}"
+              ],
+              "path": [
+                "cours",
+                "{{cours_id}}"
+              ]
+            },
+            "description": "Récupère le cours créé à l'étape 2.1. Attend HTTP 200."
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 Lister tous les cours (GET all)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Réponse est un tableau JSON', function () {",
+                  "    pm.response.to.be.json;",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('array');",
+                  "    pm.expect(json.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_cours}}/cours",
+              "host": [
+                "{{base_cours}}"
+              ],
+              "path": [
+                "cours"
+              ]
+            },
+            "description": "Récupère la liste complète des cours. Attend HTTP 200 et un tableau non vide."
+          },
+          "response": []
+        },
+        {
+          "name": "2.4 GET cours inexistant (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404 Not Found', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Message d\\'erreur lisible', function () {",
+                  "    pm.response.to.be.json;",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('message').that.is.a('string');",
+                  "    pm.expect(json.message.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_cours}}/cours/99999",
+              "host": [
+                "{{base_cours}}"
+              ],
+              "path": [
+                "cours",
+                "99999"
+              ]
+            },
+            "description": "Tente de récupérer un cours avec un ID inexistant. Attend HTTP 404 avec message d'erreur."
+          },
+          "response": []
+        }
+      ],
+      "description": "Création et lecture d'un cours via ServiceCours."
+    },
+    {
+      "name": "Scénario 3 - Cours Enrichis (GET /cours/enrichis)",
+      "item": [
+        {
+          "name": "3.1 GET /cours/enrichis (nominal)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Réponse est un tableau JSON', function () {",
+                  "    pm.response.to.be.json;",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Chaque cours enrichi contient les infos étudiant', function () {",
+                  "    var json = pm.response.json();",
+                  "    if (json.length > 0) {",
+                  "        var cours = json[0];",
+                  "        pm.expect(cours).to.have.property('id');",
+                  "        pm.expect(cours).to.have.property('titre');",
+                  "        // L'objet étudiant doit être imbriqué",
+                  "        pm.expect(cours).to.have.property('etudiant');",
+                  "        pm.expect(cours.etudiant).to.have.property('nom');",
+                  "        pm.expect(cours.etudiant).to.have.property('prenom');",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test('Temps de réponse < 2000ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_cours}}/cours/enrichis",
+              "host": [
+                "{{base_cours}}"
+              ],
+              "path": [
+                "cours",
+                "enrichis"
+              ]
+            },
+            "description": "Récupère les cours enrichis avec les données étudiant. ServiceCours appelle ServiceEtudiants en interne. Attend HTTP 200 avec tableau d'objets contenant cours + étudiant imbriqué."
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 GET /cours/enrichis - vérifier un cours spécifique",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Le cours créé est présent dans la liste enrichie', function () {",
+                  "    var json = pm.response.json();",
+                  "    var coursId = pm.collectionVariables.get('cours_id');",
+                  "    var found = json.find(function(c) {",
+                  "        return String(c.id) === String(coursId);",
+                  "    });",
+                  "    pm.expect(found).to.not.be.undefined;",
+                  "    pm.expect(found.etudiant).to.not.be.null;",
+                  "    pm.expect(found.etudiant.nom).to.eql('Laayadi');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_cours}}/cours/enrichis",
+              "host": [
+                "{{base_cours}}"
+              ],
+              "path": [
+                "cours",
+                "enrichis"
+              ]
+            },
+            "description": "Vérifie que le cours créé au scénario 2 apparaît bien dans la liste enrichie avec les bonnes données étudiant."
+          },
+          "response": []
+        }
+      ],
+      "description": "Appel de l'endpoint /cours/enrichis qui agrège les données cours + étudiant via appel inter-services."
+    },
+    {
+      "name": "Scénario 4 - Suppression étudiant et impact sur /cours/enrichis",
+      "item": [
+        {
+          "name": "4.1 Supprimer l'étudiant (DELETE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 ou 204 (suppression réussie)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});",
+                  "",
+                  "console.log('Étudiant supprimé, ID:', pm.collectionVariables.get('etudiant_id'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_etudiants}}/etudiants/{{etudiant_id}}",
+              "host": [
+                "{{base_etudiants}}"
+              ],
+              "path": [
+                "etudiants",
+                "{{etudiant_id}}"
+              ]
+            },
+            "description": "Supprime l'étudiant créé au scénario 1. Attend HTTP 200 ou 204."
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 Vérifier que l'étudiant est supprimé (GET 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404 - étudiant bien supprimé', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Message d\\'erreur lisible', function () {",
+                  "    pm.response.to.be.json;",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_etudiants}}/etudiants/{{etudiant_id}}",
+              "host": [
+                "{{base_etudiants}}"
+              ],
+              "path": [
+                "etudiants",
+                "{{etudiant_id}}"
+              ]
+            },
+            "description": "Confirme que l'étudiant supprimé n'est plus accessible. Attend HTTP 404."
+          },
+          "response": []
+        },
+        {
+          "name": "4.3 GET /cours/enrichis après suppression étudiant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK (service cours toujours opérationnel)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Réponse JSON valide', function () {",
+                  "    pm.response.to.be.json;",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Le cours orphelin a etudiant null ou message d\\'erreur', function () {",
+                  "    var json = pm.response.json();",
+                  "    var coursId = pm.collectionVariables.get('cours_id');",
+                  "    var coursOrphelin = json.find(function(c) {",
+                  "        return String(c.id) === String(coursId);",
+                  "    });",
+                  "    if (coursOrphelin) {",
+                  "        // L'étudiant doit être null ou contenir un message d'erreur",
+                  "        var etudiant = coursOrphelin.etudiant;",
+                  "        var isNullOrError = (etudiant === null) || (etudiant === undefined) ||",
+                  "            (typeof etudiant === 'object' && etudiant.hasOwnProperty('erreur'));",
+                  "        pm.expect(isNullOrError).to.be.true;",
+                  "        console.log('Comportement étudiant supprimé:', JSON.stringify(etudiant));",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_cours}}/cours/enrichis",
+              "host": [
+                "{{base_cours}}"
+              ],
+              "path": [
+                "cours",
+                "enrichis"
+              ]
+            },
+            "description": "Vérifie le comportement de /cours/enrichis après suppression de l'étudiant. Le cours orphelin doit avoir etudiant=null ou un message d'erreur géré."
+          },
+          "response": []
+        }
+      ],
+      "description": "Supprime l'étudiant créé et vérifie l'impact sur l'endpoint /cours/enrichis."
+    },
+    {
+      "name": "Scénario 5 - Simulation panne ServiceEtudiants",
+      "item": [
+        {
+          "name": "5.1 [PRÉ-PANNE] Vérifier ServiceEtudiants UP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ServiceEtudiants est UP (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "console.log('ServiceEtudiants opérationnel. Arrêtez-le maintenant puis exécutez 5.2 et 5.3.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_etudiants}}/etudiants",
+              "host": [
+                "{{base_etudiants}}"
+              ],
+              "path": [
+                "etudiants"
+              ]
+            },
+            "description": "Vérifie que ServiceEtudiants est bien UP avant de simuler la panne. Exécuter AVANT d'arrêter le service."
+          },
+          "response": []
+        },
+        {
+          "name": "5.2 [PANNE] Appel direct ServiceEtudiants (connexion refusée)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Quand le service est arrêté, on attend une erreur réseau ou 503",
+                  "pm.test('Service indisponible (erreur réseau ou 5xx)', function () {",
+                  "    var code = pm.response.code;",
+                  "    // Connexion refusée = code 0 ou erreur réseau, ou 503/502",
+                  "    var isUnavailable = (code === 0) || (code >= 500 && code <= 599);",
+                  "    pm.expect(isUnavailable).to.be.true;",
+                  "});",
+                  "",
+                  "console.log('Code reçu:', pm.response.code, '- Status:', pm.response.status);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_etudiants}}/etudiants",
+              "host": [
+                "{{base_etudiants}}"
+              ],
+              "path": [
+                "etudiants"
+              ]
+            },
+            "description": "Appel direct à ServiceEtudiants alors qu'il est arrêté. Attend une erreur réseau (connexion refusée) ou HTTP 5xx."
+          },
+          "response": []
+        },
+        {
+          "name": "5.3 [PANNE] GET /cours/enrichis avec ServiceEtudiants DOWN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Comportement attendu : ServiceCours doit gérer la panne gracieusement",
+                  "pm.test('ServiceCours répond (pas de crash total)', function () {",
+                  "    // On accepte 200 (fallback), 503 (service unavailable) ou 500",
+                  "    var code = pm.response.code;",
+                  "    pm.expect(code).to.be.oneOf([200, 500, 503]);",
+                  "});",
+                  "",
+                  "pm.test('Réponse JSON avec message d\\'erreur lisible', function () {",
+                  "    pm.response.to.be.json;",
+                  "    var json = pm.response.json();",
+                  "    // Soit un tableau avec etudiant=null (fallback), soit un objet erreur",
+                  "    var isArray = Array.isArray(json);",
+                  "    var isErrorObj = typeof json === 'object' && json.hasOwnProperty('message');",
+                  "    pm.expect(isArray || isErrorObj).to.be.true;",
+                  "    if (isErrorObj) {",
+                  "        pm.expect(json.message).to.be.a('string');",
+                  "        pm.expect(json.message.length).to.be.greaterThan(0);",
+                  "        console.log('Message erreur:', json.message);",
+                  "    }",
+                  "    if (isArray) {",
+                  "        console.log('Fallback: tableau retourné avec', json.length, 'éléments');",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test('Pas de stack trace exposée dans la réponse', function () {",
+                  "    var body = pm.response.text();",
+                  "    pm.expect(body).to.not.include('java.lang');",
+                  "    pm.expect(body).to.not.include('at org.springframework');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_cours}}/cours/enrichis",
+              "host": [
+                "{{base_cours}}"
+              ],
+              "path": [
+                "cours",
+                "enrichis"
+              ]
+            },
+            "description": "Appel /cours/enrichis alors que ServiceEtudiants est DOWN.\nComportement attendu :\n- HTTP 200 avec etudiant=null (fallback/circuit breaker)\n- OU HTTP 503/500 avec message d'erreur lisible\n- Aucune stack trace Java exposée"
+          },
+          "response": []
+        },
+        {
+          "name": "5.4 [REPRISE] Vérifier retour à la normale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK - service rétabli', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Cours enrichis de nouveau disponibles', function () {",
+                  "    pm.response.to.be.json;",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('array');",
+                  "});",
+                  "",
+                  "console.log('Service rétabli. Cours enrichis disponibles:', pm.response.json().length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_cours}}/cours/enrichis",
+              "host": [
+                "{{base_cours}}"
+              ],
+              "path": [
+                "cours",
+                "enrichis"
+              ]
+            },
+            "description": "Après redémarrage de ServiceEtudiants, vérifie que /cours/enrichis fonctionne de nouveau normalement. Attend HTTP 200."
+          },
+          "response": []
+        }
+      ],
+      "description": "Simule l'indisponibilité de ServiceEtudiants et vérifie la gestion d'erreur dans /cours/enrichis.\nINSTRUCTION : Arrêter ServiceEtudiants (port 8081) avant d'exécuter ces requêtes."
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_etudiants",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "base_cours",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "etudiant_id",
+      "value": ""
+    },
+    {
+      "key": "cours_id",
+      "value": ""
+    }
+  ]
+}

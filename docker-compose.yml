@@ -1,0 +1,11 @@
+services:
+  etudiants:
+    build: ./etudiants
+    ports:
+      - "8081:8081"
+  cours:
+    build: ./cours
+    ports:
+      - "8082:8082"
+    depends_on:
+      - etudiants
